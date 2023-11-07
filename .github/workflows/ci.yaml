@@ -13,47 +13,10 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
           submodules: true
-
-## Documents should contain desc. of all these fields and how to generate and store the baseline
-## Set of examples [With all the fields]
-##FAQs:
-## - My app. creates temp files and I need to ignore those files, what should be the solution here?
-## - I want my CI to pass, but still generate the report
-## - I want to only list Process, file or syscall events, what should I do?
-## TODO: Create similar action for k8tls
-#
-#      - name: Kubearmor action [2 Actions]
-#        uses: accuknox-action@semver
-#        with:
-#          kubearmor-image: stable[IMAGE_NAME]
-#          discovery-engine: stable[IMAGE_NAME]
-#          workload-namespace: [""] [Phase 2]
-#          license-key: "string"[Secrets] [Phase 2]
-#          user-id: "" [Phase 2]
-#
-#      - name: Kubearmor action to generate report[2 Actions]
-#        uses: accuknox-report@semver
-#        with:
-#          baseline-report-path: "" [Github]
-#          labels: "" ["kubearmor-app: kubearmor-relay"]
-#          operation: ""[Process, file, Network, Syscall]
-#          container-name: "" []
-#          namespaces: [""]
-#          workloads: ["deployment/mysql","statefulsets/vault","deployment/*"]
-#          source: ""
-#          process-ignore-paths: "/sbin" [Regex]
-#          file-ignore-paths: "/sbin" [Regex]
-#          ignore-return-code: true/false
-#          view: tabular/ [Phase 2]
-
-
-      #      - name: Installing Prerequisites (Kind Cluster)
-#        uses: helm/kind-action@v1.4.0
 
       - name: Checkout kubearmor repo
         uses: actions/checkout@v3
@@ -73,19 +36,6 @@ jobs:
         with:
           go-version: "v1.20"
 
-#      - name: Install the latest LLVM toolchain
-#        run: ./Kubearmor/.github/workflows/install-llvm.sh
-#
-#      - name: Compile libbpf
-#        run: |
-#          ls
-#          cd Kubearmor
-#          ls
-#          cd KubeArmor/BPF
-#          git submodule update --init --recursive
-#          ls
-#          make -C libbpf/src
-
       - name: Setup a Kubernetes environment
         run: ./Kubearmor/contribution/k3s/install_k3s.sh
 
@@ -101,7 +51,7 @@ jobs:
           ref: feat-report
           path: accuknox-cli
 
-      - name: Install accuknox-cli, kubearmor and discovery engine
+      - name: Install accuknox-cli, kubearmor, and discovery engine
         run: |
           cd accuknox-cli
           ./accuknox-cli version
@@ -109,9 +59,6 @@ jobs:
           kubectl get pods -A
           sleep 100
           kubectl get pods -A
-
-#          kubectl describe -f $(kubectl get pods -l app=discovery-engine -A -o jsonpath='{.items[0].metadata.name}') -n accuknox-agents
-
 
       - name: Deploy test application
         run: |
@@ -127,22 +74,6 @@ jobs:
           helm repo update
           helm install kps prometheus-community/kube-prometheus-stack
 
-#      - name: Test KubeArmor using Ginkgo
-#        run: |
-#          cd Kubearmor
-#          go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
-#          make -C tests/
-#        timeout-minutes: 30
-
-#      - name: Test Discovery engine using Ginkgo
-#        run: |
-#          curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin
-#          cd discovery-engine/tests
-#          go mod tidy
-#          go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
-#          ginkgo -r
-#        timeout-minutes: 30
-
       - name: Generate report
         run: |
           kubectl get pods -A
@@ -156,8 +87,7 @@ jobs:
           mv /tmp/diff-report-*.json downloads/diff-report.json
           mv /tmp/diff-report-*.md downloads/diff-report.md
 
-
-      - name: Upload artifects
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: Baseline report
@@ -167,7 +97,7 @@ jobs:
         uses: thollander/actions-comment-pull-request@v2
         with:
           filePath: downloads/diff-report.md
-          
+
 name: Trivy CSPM Scan
 
 on:
@@ -200,5 +130,3 @@ jobs:
 
       - name: Print Trivy Results
         run: cat results.json
-
-      
